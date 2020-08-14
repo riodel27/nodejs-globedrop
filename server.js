@@ -5,6 +5,7 @@ const compression = require("compression");
 const express = require("express");
 const helmet = require("helmet");
 const swaggerUi = require("swagger-ui-express");
+const { isArray: _isArray } = require("lodash");
 
 const config = require("./config")[process.env.NODE_ENV || "development"];
 const db = require("./db");
@@ -12,9 +13,13 @@ const swaggerSpec = require("./utils/swagger");
 
 const { normalizePort } = require("./utils/helper");
 
-// /*routes*/
-// const organization = require("./routes/organization.route");
-// const user = require("./routes/user.route");
+/** models */
+const UserModel = require("./models/user.model");
+
+/** services */
+const UserService = require("./services/user.service");
+
+const routes = require("./routes");
 
 const port = normalizePort(config.port || "3000");
 
@@ -31,12 +36,21 @@ const app = express();
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+/**Instantiate Services and pass Models */
+const user_service = new UserService(UserModel, config);
+
 app.use(helmet());
 app.use(compression());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-// app.use(cors);
+// routes
+app.use(
+  "/api",
+  routes({
+    user_service,
+  })
+);
 
 app.get("/", (_, res) => res.send("NGO Directory App"));
 
@@ -56,7 +70,7 @@ app.use((err, req, res, next) => {
 
   if (err.code === "BAD_USER_INPUT") {
     const errors = JSON.parse(err.message);
-    // res.status(err.status || 422).json(_isArray(errors) ? { errors } : errors);
+    res.status(err.status || 422).json(_isArray(errors) ? { errors } : errors);
     return;
   }
 

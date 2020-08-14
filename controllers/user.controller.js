@@ -1,320 +1,238 @@
-/* eslint-disable no-underscore-dangle */
-/* eslint-disable camelcase */
-const Joi = require('@hapi/joi');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const UserService = require('../services/user.service');
-const TokenService = require('../services/token.service');
+const mongoose = require("mongoose");
+const { body, validationResult, param } = require("express-validator");
+const { not } = require("ramda");
 
-const GetAllUsersList = async (req, res, next) => {
-	try {
-		const users = await UserService.Find({});
-
-		return res.status(200).json({
-			message: 'Ok',
-			data: users,
-		});
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const GetOrganizationsByUser = async (req, res, next) => {
-	const { user_id } = req.params;
-	try {
-		const organizations = await UserService.FindOneAndPopulate(
-			{ _id: user_id },
-			'organizations'
-		);
-
-		return res.status(200).json({
-			message: 'Ok',
-			data: organizations,
-		});
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const GetUsersByType = async (req, res, next) => {
-	const { user_type } = req.params;
-	try {
-		const users = await UserService.Find({
-			userType: user_type,
-		});
-
-		return res.status(200).json({
-			message: 'Ok',
-			data: users,
-		});
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const GetUserById = async (req, res, next) => {
-	try {
-		const { user_id } = req.params;
-		const user = await UserService.FindOne({
-			_id: user_id,
-		});
-		console.log('user: ', user);
-		if (!user) {
-			return res.status(404).json({
-				message: 'User Not Found',
-			});
-		}
-
-		return res.status(200).json({
-			message: 'Ok',
-			data: user,
-		});
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const Register = async (req, res, next) => {
-	try {
-		const {
-			username,
-			name,
-			email,
-			password,
-			language,
-			country,
-			userType,
-			organizations,
-		} = req.body;
-
-		const existing_user = await UserService.FindOne({
-			email,
-		});
-		if (existing_user) {
-			return res.status(409).json({
-				message: 'User with this email already exist',
-			});
-		}
-
-		await UserService.Create({
-			username,
-			name,
-			email,
-			password,
-			language,
-			country,
-			userType,
-			organizations,
-		});
-
-		return res.status(200).json({
-			message: 'Ok',
-			data: 'User Inserted',
-		});
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const UpdateUser = async (req, res, next) => {
-	try {
-		const { user_id } = req.params;
-		const {
-			username,
-			name,
-			email,
-			password,
-			language,
-			country,
-			userType,
-			organizations,
-		} = req.body;
-
-		const user = await UserService.FindOne({
-			_id: user_id,
-		});
-		console.log('user: ', user);
-		if (!user) {
-			return res.status(404).json({
-				message: 'User Not Found',
-			});
-		}
-
-		await UserService.FindOneAndUpdate(
-			{ _id: user_id },
-			{
-				username,
-				name,
-				email,
-				password,
-				language,
-				country,
-				userType,
-				organizations,
-			}
-		);
-
-		return res.status(200).json({
-			message: 'Ok',
-			data: 'User Updated',
-		});
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const DeleteUser = async (req, res, next) => {
-	try {
-		const { user_id } = req.params;
-
-		const user = await UserService.FindOne({
-			_id: user_id,
-		});
-		console.log('user: ', user);
-		if (!user) {
-			return res.status(404).json({
-				message: 'User Not Found',
-			});
-		}
-
-		await UserService.DeleteOne({ _id: user_id });
-
-		return res.status(200).json({
-			message: 'Ok',
-			data: 'User Deleted',
-		});
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const Login = async (req, res, next) => {
-	try {
-		const { email, password } = req.body;
-
-		try {
-			const schema = Joi.object({
-				email: Joi.string().email().required(),
-				password: Joi.string().required(),
-			});
-			const input = {
-				email,
-				password,
-			};
-			await schema.validateAsync(input);
-		} catch (error) {
-			return res.status(400).json({
-				message: 'Bad user input: ' + error.message,
-			});
-			//return next(new ExtendedError('BAD_USER_INPUT', 400, error.message))
-		}
-
-		const user = await UserService.FindOne({ email });
-		if (!user) {
-			return res.status(400).json({
-				message: 'Invalid email/password',
-			});
-		}
-
-		const valid =
-			user.password && (await bcrypt.compare(password, user.password));
-
-		if (!valid)
-			return res.status(400).json({
-				message: 'Invalid email/password',
-			});
-
-		const access_token = jwt.sign(user.toJSON(), process.env.SECRET_TOKEN, {
-			expiresIn: '24h',
-		});
-		
-		const refresh_token = jwt.sign(
-			user.toJSON(),
-			process.env.REFRESH_SECRET_TOKEN,
-			{ expiresIn: process.env.REFRESH_SECRET_TOKEN_EXPIRED_IN }
-		);
-		
-
-		await TokenService.Create({ refresh_token, access_token });
-		// logger.info(`${req.method} ${req.originalUrl} ${200}`);
-		return res.status(200).json({ message: 'Ok', access_token, refresh_token });
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const Logout = async (req, res, next) => {
-	try {
-		const authorization =
-			req.headers['x-access-token'] || req.headers.authorization;
-		const token =
-			authorization &&
-			authorization.startsWith('Bearer') &&
-			authorization.slice(7, authorization.length);
-
-		await Promise.all([TokenService.DeleteOne({ access_token: token })]);
-
-		// logger.info(`${req.method} ${req.originalUrl} ${200}`);
-		return res.status(200).json({ message: 'Ok' });
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
-
-const GetAccessTokenViaRefreshToken = async (req, res, next) => {
-	try {
-		const { refresh_token } = req.params;
-
-		try {
-			const schema = Joi.object({
-				refresh_token: Joi.string(),
-			});
-			const input = {
-				refresh_token,
-			};
-			await schema.validateAsync(input);
-		} catch (error) {
-			return next(new ExtendedError('BAD_USER_INPUT', 400, error.message));
-		}
-
-		const token = await TokenService.FindOne({ refresh_token });
-
-		if (!token) {
-			return next(
-				new ExtendedError(
-					'RefreshTokenNotFound',
-					404,
-					'refresh_token not found'
-				)
-			);
-		}
-
-		try {
-			const decoded = await jwtVerifyRefreshToken(token.refresh_token);
-			const { iat, exp, ...user } = decoded;
-			const access_token = jwt.sign(user, process.env.SECRET_TOKEN, {
-				expiresIn: process.env.SECRET_TOKEN_EXPIRED_IN,
-			});
-
-			logger.info(`${req.method} ${req.originalUrl} ${200}`);
-			return res.status(200).json({ message: 'Ok', access_token });
-		} catch (error) {
-			return next(new ExtendedError('InvalidToken', 400, error.message));
-		}
-	} catch (error) {
-		return next(new Error(error.message));
-	}
-};
+const {
+  UserInputError,
+  CustomError,
+  ForbiddenError,
+} = require("../utils/error");
 
 module.exports = {
-	GetAllUsersList,
-	GetUsersByType,
-	GetUserById,
-	GetAccessTokenViaRefreshToken,
-	Register,
-	UpdateUser,
-	DeleteUser,
-	Login,
-	Logout,
-	GetOrganizationsByUser,
+  validate: (method) => {
+    switch (method) {
+      case "createUser": {
+        return [
+          body("email", "Valid email address is required.").isEmail(),
+          body("confirmPassword", "Confirm password is required").custom(
+            (value, { req }) => {
+              const { password, confirmPassword } = req.body;
+
+              if (password && password !== "") {
+                if (password !== confirmPassword)
+                  throw new Error(
+                    "Confirm password did not match the password."
+                  );
+              }
+
+              return true;
+            }
+          ),
+        ];
+      }
+      case "deleteUser": {
+        return [
+          param("id", "User ID is required").custom((id) => {
+            if (not(id)) return false;
+
+            if (id === "") return false;
+
+            if (not(mongoose.Types.ObjectId.isValid(id)))
+              throw new Error(`Invalid User ID: ${id}`);
+
+            return true;
+          }),
+        ];
+      }
+      case "getUserById": {
+        return [
+          param("id", "User ID is required").custom((id) => {
+            if (not(id)) return false;
+
+            if (id === "") return false;
+
+            if (not(mongoose.Types.ObjectId.isValid(id)))
+              throw new Error(`Invalid User ID: ${id}`);
+
+            return true;
+          }),
+        ];
+      }
+      case "updateUser": {
+        return [
+          param("id", "User ID is required").custom((id) => {
+            if (not(id)) return false;
+
+            if (id === "") return false;
+
+            if (not(mongoose.Types.ObjectId.isValid(id)))
+              throw new Error(`Invalid User ID: ${id}`);
+
+            return true;
+          }),
+          body("email", "Valid email address is required.")
+            .isEmail()
+            .optional(),
+          body("password", "Password is not allowed to be empty.")
+            .notEmpty()
+            .optional(),
+          body("confirmPassword").custom((value, { req }) => {
+            const { password, confirmPassword } = req.body;
+
+            if (password && not(confirmPassword))
+              throw new Error("Confirm password did not match the password.");
+
+            if (password && password !== confirmPassword)
+              throw new Error("Confirm password did not match the password.");
+
+            return true;
+          }),
+        ];
+      }
+
+      default:
+        break;
+    }
+  },
+  createUser: (UserService) => async (req, res, next) => {
+    try {
+      const { body: userInput } = req;
+
+      const errors = validationResult(req);
+
+      // validation error
+      if (not(errors.isEmpty())) {
+        return next(new UserInputError(422, JSON.stringify(errors.array())));
+      }
+
+      const existingUserEmail = await UserService.findOneUser({
+        email: userInput.email,
+      });
+
+      if (existingUserEmail)
+        return next(
+          new CustomError(
+            "EMAIL_ALREADY_EXIST",
+            400,
+            "User with this email already exist."
+          )
+        );
+
+      const user = await UserService.createUser(userInput);
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(201).json({
+        message: "User Inserted",
+        data: user,
+      });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
+  deleteUser: (UserService) => async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const errors = validationResult(req);
+
+      if (not(errors.isEmpty())) {
+        const error = errors.errors[0];
+
+        if (error.param === "id")
+          return next(new CustomError("INVALID_USER_ID", 422, error.msg));
+      }
+
+      await UserService.deleteUser({ _id: id });
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(202).json({ message: "delete successful" });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
+  getUserById: (UserService) => async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const errors = validationResult(req);
+
+      if (not(errors.isEmpty())) {
+        const error = errors.errors[0];
+        if (error.param === "id")
+          return next(new CustomError("INVALID_USER_ID", 422, error.msg));
+      }
+
+      const user = await UserService.findOneUser(
+        { _id: id },
+        { populate: true }
+      );
+
+      if (not(user))
+        return next(new CustomError("USER_NOT_FOUND", 404, "User Not Found"));
+
+      return res.status(200).json({ message: "Ok", data: user });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
+  getUsers: (UserService) => async (req, res, next) => {
+    try {
+      const users = await UserService.list(req.query);
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(200).json({ message: "Ok", data: users });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
+  getUsersByUserType: (UserService) => async (req, res, next) => {
+    try {
+      const { user_type } = req.params;
+
+      const users = await UserService.listUsersByUserType({
+        userType: user_type,
+      });
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(200).json({ message: "Ok", data: users });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
+  updateUser: (UserService) => async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { body: userInput } = req;
+
+      const errors = validationResult(req);
+
+      if (not(errors.isEmpty())) {
+        return next(new UserInputError(422, JSON.stringify(errors.array())));
+      }
+
+      if (userInput.email) {
+        const existingUserEmail = await UserService.findOneUser({
+          email: userInput.email,
+        });
+
+        if (existingUserEmail && existingUserEmail.id !== id)
+          return next(
+            new CustomError("EMAIL_ALREADY_EXIST", 400, "Email already exist.")
+          );
+      }
+
+      const password =
+        userInput.password &&
+        userInput.password.trim() &&
+        (await bcrypt.hash(userInput.password.trim(), 12));
+
+      const user = await UserService.findOneUserAndUpdate(
+        { _id: id },
+        { ...userInput, ...(password && { password }) }
+      );
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(200).json({ message: "User Updated", data: user });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
 };
