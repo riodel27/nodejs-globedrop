@@ -1,6 +1,11 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
+
 const { body, validationResult, param } = require("express-validator");
 const { not } = require("ramda");
+
+const { jwtVerifyRefreshToken } = require("../utils/helper");
 
 const {
   UserInputError,
@@ -183,6 +188,16 @@ module.exports = {
       return next(new Error(error.message));
     }
   },
+  getOrganizationsByUser: (UserService) => async (req, res, next) => {
+    try {
+      const users = await UserService.findOrganizationsByUser(req.query);
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(200).json({ message: "Ok", data: users });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
   getUsersByUserType: (UserService) => async (req, res, next) => {
     try {
       const { user_type } = req.params;
@@ -195,6 +210,84 @@ module.exports = {
       return res.status(200).json({ message: "Ok", data: users });
     } catch (error) {
       return next(new Error(error.message));
+    }
+  },
+  login: (UserService, config) => async (req, res, next) => {
+    try {
+      const { email, password } = req.body;
+
+      const user = await UserService.findOneUser({ email });
+
+      if (not(user))
+        return next(new ForbiddenError(401, "Incorrect email or password."));
+
+      const valid =
+        password &&
+        user.password &&
+        (await bcrypt.compare(password, user.password));
+
+      if (not(valid))
+        return next(new ForbiddenError(401, "Incorrect email or password."));
+
+      const access_token = jwt.sign(user.toJSON(), config.secretToken, {
+        expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
+      });
+
+      const refresh_token = jwt.sign(user.toJSON(), config.secretRefreshToken, {
+        expiresIn: `${config.refreshTokenTtl}`,
+      });
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(200).json({
+        access_token,
+        refresh_token: refresh_token,
+        expires_in: config.accessTokenTtl, // return in hours.
+      });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
+  logout: (/*BlackListTokenService*/) => async (req, res, next) => {
+    try {
+      const authorization =
+        req.headers["x-access-token"] || req.headers.authorization;
+      const token =
+        authorization &&
+        authorization.startsWith("Bearer") &&
+        authorization.slice(7, authorization.length);
+
+      // await BlackListTokenService.createBlackListToken({
+      //   access_token: token,
+      // });
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      return next(new Error(error.message));
+    }
+  },
+  refreshToken: (config) => async (req, res, next) => {
+    try {
+      const { refresh_token: refreshToken } = req.params;
+
+      const decoded = await jwtVerifyRefreshToken(refreshToken);
+      const { iat, exp, ...user } = decoded;
+
+      const accessToken = jwt.sign(user, config.secretToken, {
+        expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
+      });
+
+      const refresh_token = jwt.sign(user, config.secretRefreshToken, {
+        expiresIn: `${config.refreshTokenTtl}`,
+      });
+
+      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      return res.status(200).json({
+        access_token: accessToken,
+        refresh_token,
+      });
+    } catch (error) {
+      return next(new CustomError("INVALID_REFRESH_TOKEN", 400, error.message));
     }
   },
   updateUser: (UserService) => async (req, res, next) => {

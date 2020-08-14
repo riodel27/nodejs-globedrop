@@ -26,11 +26,17 @@ class UserService {
   async findOneUser(query, options = {}) {
     const user = await this.model
       .findOne(query)
-      .populate(options.populate && "image")
-      .populate(options.populate && "profession")
-      .populate(options.populate && "role");
+      .populate(options.populate && "Organization");
 
     return user;
+  }
+
+  async findOrganizationsByUser(query, options = {}) {
+    const user = await this.model
+      .findOne(query)
+      .populate(options.populate && "Organization");
+
+    return user.organizations;
   }
 
   async findOneUserAndUpdate(filter, data, options = {}) {

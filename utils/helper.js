@@ -1,8 +1,10 @@
 const jwt = require("jsonwebtoken");
 
+const config = require("../config")[process.env.NODE_ENV || "development"];
+
 const jwtVerifyRefreshToken = (token) =>
   new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.REFRESH_SECRET_TOKEN, (error, decoded) => {
+    jwt.verify(token, config.secretRefreshToken, (error, decoded) => {
       if (error) {
         reject(new Error(error.message));
       }
@@ -12,7 +14,7 @@ const jwtVerifyRefreshToken = (token) =>
 
 const jwtVerify = (token) =>
   new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.SECRET_TOKEN, (error, decoded) => {
+    jwt.verify(token, config.secretToken, (error, decoded) => {
       if (error) {
         reject(new Error(error.message));
       }

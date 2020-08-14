@@ -9,6 +9,7 @@ const { isArray: _isArray } = require("lodash");
 
 const config = require("./config")[process.env.NODE_ENV || "development"];
 const db = require("./db");
+const middleware = require("./utils/middleware");
 const swaggerSpec = require("./utils/swagger");
 
 const { normalizePort } = require("./utils/helper");
@@ -43,12 +44,14 @@ app.use(helmet());
 app.use(compression());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(middleware.cors);
 
 // routes
 app.use(
   "/api",
   routes({
     user_service,
+    config,
   })
 );
 
