@@ -16,9 +16,11 @@ const { normalizePort } = require("./utils/helper");
 
 /** models */
 const UserModel = require("./models/user.model");
+const OrganizationModel = require("./models/organization.model");
 
 /** services */
 const UserService = require("./services/user.service");
+const OrganizationService = require("./services/organization.service");
 
 const routes = require("./routes");
 
@@ -37,8 +39,9 @@ const app = express();
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-/**Instantiate Services and pass Models */
+/**Instantiate Services once and pass Models */
 const user_service = new UserService(UserModel, config);
+const organization_service = new OrganizationService(OrganizationModel, config);
 
 app.use(helmet());
 app.use(compression());
@@ -50,16 +53,13 @@ app.use(middleware.cors);
 app.use(
   "/api",
   routes({
-    user_service,
     config,
+    organization_service,
+    user_service,
   })
 );
 
 app.get("/", (_, res) => res.send("NGO Directory App"));
-
-// /*routes*/
-// app.use(organization);
-// app.use(user);
 
 // error
 app.use((err, req, res, next) => {

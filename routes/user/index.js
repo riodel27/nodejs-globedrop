@@ -21,8 +21,6 @@ module.exports = (params) => {
 
   router.post("/token/:refresh_token", UserController.refreshToken(config));
 
-  /** authenticated route/s */
-
   router.use(middlware.isAuthenticated);
 
   router.get(

@@ -1,77 +1,84 @@
-const Organization = require('../models/organization.model');
+/* eslint-disable no-underscore-dangle */
+const { groupBy: _groupBy } = require("lodash");
+const { not } = require("ramda");
+const mongoose = require("mongoose");
 
-const Create = async (data) => {
-	try {
-		const organization = await Organization.create(data);
-		return organization;
-	} catch (error) {
-		throw Error(error);
-	}
-};
+/** Business logic here */
 
-const Find = async (query) => {
-	try {
-		const organization = await Organization.find(query);
-		return organization;
-	} catch (error) {
-		throw Error(error);
-	}
-};
+class OrganizationService {
+  constructor(organization, config) {
+    this.model = organization;
+    this.config = config;
+  }
 
-const FindOne = async (query) => {
-	try {
-		const organization = await Organization.findOne(query);
-		return organization;
-	} catch (error) {
-		throw Error(error);
-	}
-};
+  async createOrganization(data, options = {}) {
+    const organization = await this.model.create(data);
+    return organization;
+  }
 
-const FindOneAndPopulate = async (query, populate_field) => {
-	try {
-		const organization = await Organization.findOne(query).populate(
-			populate_field
-		);
-		const admins = organization.admins;
-		return admins;
-	} catch (error) {
-		throw Error(error);
-	}
-};
+  async deleteOrganization(filter) {
+    const organization = await this.model.deleteOne(filter);
+    return organization;
+  }
 
-const FindOneAndUpdate = async (filter, data, options = {}) => {
-	try {
-		const organization = await Organization.findOneAndUpdate(
-			filter,
-			{
-				...data,
-				updatedAt: new Date(),
-			},
-			{
-				new: true,
-				...options,
-			}
-		);
-		return organization;
-	} catch (error) {
-		throw Error(error);
-	}
-};
+  async findAdminsByOrganization(query, options = {}) {
+    const organization = await this.model
+      .findOne(query)
+      .populate(options.populate && "User");
 
-const DeleteOne = async (filter) => {
-	try {
-		const organization = await Organization.deleteOne(filter);
-		return organization;
-	} catch (error) {
-		throw Error(error);
-	}
-};
+    return organization.admins;
+  }
 
-module.exports = {
-	Create,
-	Find,
-	FindOne,
-	FindOneAndUpdate,
-	FindOneAndPopulate,
-	DeleteOne,
-};
+  async findOneOrganization(query, options = {}) {
+    const organization = await this.model.findOne(query);
+
+    return organization;
+  }
+
+  async findOneOrganizationAndUpdate(filter, data, options = {}) {
+    const organization = await this.model.findOneAndUpdate(filter, data, {
+      new: true,
+      ...options,
+    });
+
+    return organization;
+  }
+
+  async list(options) {
+    try {
+      const {
+        filter: Filter,
+        offset: Offset,
+        max,
+        sortby: SortBy,
+        sortorder: SortOrder,
+      } = options;
+
+      const query =
+        Filter && Filter.trim()
+          ? {
+              $text: { $search: Filter.trim() },
+            }
+          : {};
+
+      const offset = Offset ? Number(JSON.parse(Offset)) : 0;
+      const limit = max ? Number(JSON.parse(max)) : 10;
+      // const sortby = userSortByScope(SortBy ? SortBy.toLowerCase() : "f");
+      // const sortorder = sortOrder(SortOrder ? SortOrder.toLowerCase() : "a");
+
+      const organizations = await this.model.find(query, null, {
+        // sort: { [sortby]: sortorder },
+        skip: offset,
+        limit: limit,
+      });
+      // .populate("profession")
+      // .populate("role");
+
+      return organizations;
+    } catch (error) {
+      throw Error(error);
+    }
+  }
+}
+
+module.exports = OrganizationService;
