@@ -1,8 +1,11 @@
 const mongoose = require("mongoose");
 
-module.exports.connect = async (url) =>
-  mongoose.connect(url, {
+module.exports = async (url) => {
+  const connection = await mongoose.connect(url, {
     useFindAndModify: false,
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
+
+  return connection.connection.db;
+};

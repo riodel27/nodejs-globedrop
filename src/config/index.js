@@ -12,6 +12,9 @@ module.exports = {
     secretToken: "globedrop",
     secretRefreshToken: "globedrop123",
     refreshTokenTtl: "30d",
+    api: {
+      prefix: "/api",
+    },
   },
   production: {},
   staging: {},
