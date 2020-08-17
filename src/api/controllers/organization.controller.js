@@ -9,7 +9,7 @@ const {
   UserInputError,
   CustomError,
   ForbiddenError,
-} = require("../utils/error");
+} = require("../../utils/error");
 
 module.exports = {
   validate: (method) => {

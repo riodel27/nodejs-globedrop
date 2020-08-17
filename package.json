@@ -2,12 +2,13 @@
   "name": "ngo-directory",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./src/server.js",
   "scripts": {
-    "dev": "nodemon ./server.js",
+    "dev": "nodemon ./src/server.js",
+    "start": "pm2 start ./src/server.js --name globedrop",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Cleo Credo",
+  "author": "Rio Del Pamaong",
   "license": "ISC",
   "dependencies": {
     "compression": "^1.7.3",

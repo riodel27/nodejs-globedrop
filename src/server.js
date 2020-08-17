@@ -22,7 +22,7 @@ const OrganizationModel = require("./models/organization.model");
 const UserService = require("./services/user.service");
 const OrganizationService = require("./services/organization.service");
 
-const routes = require("./routes");
+const routes = require("./api/routes");
 
 const port = normalizePort(config.port || "3000");
 

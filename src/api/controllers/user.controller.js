@@ -5,13 +5,13 @@ const mongoose = require("mongoose");
 const { body, validationResult, param } = require("express-validator");
 const { not } = require("ramda");
 
-const { jwtVerifyRefreshToken } = require("../utils/helper");
+const { jwtVerifyRefreshToken } = require("../../utils/helper");
 
 const {
   UserInputError,
   CustomError,
   ForbiddenError,
-} = require("../utils/error");
+} = require("../../utils/error");
 
 module.exports = {
   validate: (method) => {
