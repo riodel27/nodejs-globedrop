@@ -1,6 +1,7 @@
-const loaders = require("./loaders");
 const express = require("express");
 
+const loaders = require("./loaders");
+const logger = require("./loaders/logger");
 const config = require("./config")[process.env.NODE_ENV || "development"];
 
 const { normalizePort } = require("./utils/helper");
@@ -17,7 +18,8 @@ async function startServer() {
       console.log(err);
       return;
     }
-    console.log(`Your server is ready !`);
+
+    logger.info("Your server is ready !");
   });
 }
 

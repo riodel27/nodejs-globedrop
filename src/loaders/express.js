@@ -1,10 +1,11 @@
 const bodyParser = require("body-parser");
 const compression = require("compression");
-const express = require("express");
+const morgan = require("morgan");
 const helmet = require("helmet");
 const swaggerUi = require("swagger-ui-express");
 const { isArray: _isArray } = require("lodash");
 
+const logger = require("./logger");
 const middleware = require("../utils/middleware");
 const swaggerSpec = require("../utils/swagger");
 
@@ -19,7 +20,9 @@ const UserService = require("../services/user.service");
 const OrganizationService = require("../services/organization.service");
 
 module.exports = async ({ app, config }) => {
-  app.use(require("morgan")("dev"));
+  app.use(
+    require("morgan")(config.nodeEnv !== "production" ? "dev" : "combined")
+  );
 
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
@@ -60,8 +63,27 @@ module.exports = async ({ app, config }) => {
       return;
     }
 
-    console.log("error: ", err.message);
-
+    logger.error(err.message, {
+      url: req.originalUrl,
+      meta: {
+        code: err.code,
+        method: req.method,
+        path: req.path,
+        route: req.route,
+        body: req.body,
+        params: req.params,
+        query: req.query,
+        ip:
+          (req.headers && req.headers["x-forwarded-for"]) ||
+          (req.connection && req.connection.remoteAddress) ||
+          (req.socket && req.socket.remoteAddress) ||
+          (req.connection &&
+            (req.connection.socket
+              ? req.connection.socket.remoteAddress
+              : null)),
+        status: err.status || 500,
+      },
+    });
     if (err.code === "BAD_USER_INPUT") {
       const errors = JSON.parse(err.message);
       res

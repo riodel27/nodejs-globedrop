@@ -16,6 +16,20 @@ module.exports = {
       prefix: "/api",
     },
   },
-  production: {},
+  production: {
+    port: process.env.PORT,
+    logLevel: process.env.LOG_LEVEL,
+    nodeEnv: process.env.NODE_ENV,
+    database: {
+      url: process.env.MONGO_URI,
+    },
+    accessTokenTtl: process.env.SECRET_TOKEN_EXPIRED_IN,
+    secretToken: process.env.SECRET_TOKEN_EXPIRED_IN,
+    secretRefreshToken: process.env.SECRET_TOKEN,
+    refreshTokenTtl: process.env.REFRESH_SECRET_TOKEN_EXPIRED_IN,
+    api: {
+      prefix: process.env.API_PREFIX,
+    },
+  },
   staging: {},
 };
