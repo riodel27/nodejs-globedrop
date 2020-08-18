@@ -15,6 +15,15 @@ class UserService {
   }
 
   async createUser(data, options = {}) {
+    const existingUserEmail = await this.user.findOne({ email: data.email });
+
+    if (existingUserEmail)
+      throw new CustomError(
+        "EMAIL_ALREADY_EXIST",
+        400,
+        "User with this email already exist."
+      );
+
     const user = await this.user.create(data);
     return user;
   }

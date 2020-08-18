@@ -116,19 +116,6 @@ module.exports = {
 
       const UserServiceInstance = Container.get("user.service");
 
-      const existingUserEmail = await UserServiceInstance.findOneUser({
-        email: userInput.email,
-      });
-
-      if (existingUserEmail)
-        return next(
-          new CustomError(
-            "EMAIL_ALREADY_EXIST",
-            400,
-            "User with this email already exist."
-          )
-        );
-
       const user = await UserServiceInstance.createUser(userInput);
 
       logger.info(`${req.method} ${req.originalUrl} ${200}`);
@@ -138,7 +125,7 @@ module.exports = {
         data: user,
       });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   deleteUser: async (req, res, next) => {
