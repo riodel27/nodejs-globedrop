@@ -1,7 +1,7 @@
 const express = require("express");
 const middleware = require("./middlewares");
 
-// Require the index file
+// require the index file
 const organizationRoute = require("./organization");
 const userRoute = require("./user");
 
@@ -11,21 +11,16 @@ const UserController = require("../controllers/user.controller");
 
 const router = express.Router();
 
-module.exports = (params) => {
-  const { user_service: UserService } = params;
-
-  router.use("/organization", organizationRoute(params));
-  router.use("/user", userRoute(params));
+module.exports = () => {
+  router.use("/organization", organizationRoute());
+  router.use("/user", userRoute());
 
   router.use(middleware.isAuthenticated);
 
-  router.get("/organizations", OrganizationController.getOrganizations(params));
-  router.get("/users", UserController.getUsers(UserService));
+  router.get("/organizations", OrganizationController.getOrganizations);
+  router.get("/users", UserController.getUsers);
 
-  router.get(
-    "/users/:user_type",
-    UserController.getUsersByUserType(UserService)
-  );
+  router.get("/users/:user_type", UserController.getUsersByUserType);
 
   return router;
 };

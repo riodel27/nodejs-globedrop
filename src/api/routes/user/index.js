@@ -6,44 +6,39 @@ const UserController = require("../../controllers/user.controller");
 
 const router = express.Router();
 
-module.exports = (params) => {
-  const { config, user_service: UserService } = params;
-
+module.exports = () => {
   router.post(
     "/",
     UserController.validate("createUser"),
-    UserController.createUser(UserService)
+    UserController.createUser
   );
 
-  router.post("/login", UserController.login(UserService, config));
+  router.post("/login", UserController.login);
 
-  router.post("/logout", UserController.logout(/*BlackListTokenService*/));
+  router.post("/logout", UserController.logout);
 
-  router.post("/token/:refresh_token", UserController.refreshToken(config));
+  router.post("/token/:refresh_token", UserController.refreshToken);
 
   router.use(middlware.isAuthenticated);
 
   router.get(
     "/:id",
     UserController.validate("getUserById"),
-    UserController.getUserById(UserService)
+    UserController.getUserById
   );
 
-  router.get(
-    "/:id/organizations",
-    UserController.getOrganizationsByUser(UserService)
-  );
+  router.get("/:id/organizations", UserController.getOrganizationsByUser);
 
   router.put(
     "/:id",
     UserController.validate("updateUser"),
-    UserController.updateUser(UserService)
+    UserController.updateUser
   );
 
   router.delete(
     "/:id",
     UserController.validate("deleteUser"),
-    UserController.deleteUser(UserService)
+    UserController.deleteUser
   );
 
   return router;

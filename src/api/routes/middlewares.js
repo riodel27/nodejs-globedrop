@@ -1,8 +1,3 @@
-/* eslint-disable no-underscore-dangle */
-
-const { find: _find, has: _has } = require("lodash");
-const { not } = require("ramda");
-
 const { jwtVerify } = require("../../utils/helper");
 const { CustomError, AuthenticationError } = require("../../utils/error");
 

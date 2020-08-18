@@ -1,7 +1,6 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
+const { Container } = require("typedi");
 const { body, validationResult, param } = require("express-validator");
 const { not } = require("ramda");
 
@@ -63,7 +62,10 @@ module.exports = {
         break;
     }
   },
-  createOrganization: (OrganizationService) => async (req, res, next) => {
+  createOrganization: async (req, res, next) => {
+    const logger = Container.get("logger");
+    logger.debug("Calling create organization endpoint with body:%o", req.body);
+
     try {
       const { body: userInput } = req;
 
@@ -74,7 +76,9 @@ module.exports = {
         return next(new UserInputError(422, JSON.stringify(errors.array())));
       }
 
-      const existingOrganization = await OrganizationService.findOneOrganization(
+      const OrganizationServiceInstance = Container.get("organization.service");
+
+      const existingOrganization = await OrganizationServiceInstance.findOneOrganization(
         {
           org_name: userInput.org_name,
         }
@@ -89,11 +93,12 @@ module.exports = {
           )
         );
 
-      const organization = await OrganizationService.createOrganization(
+      const organization = await OrganizationServiceInstance.createOrganization(
         userInput
       );
 
-      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
+
       return res.status(201).json({
         message: "Organization Inserted",
         data: organization,
@@ -102,7 +107,10 @@ module.exports = {
       return next(new Error(error.message));
     }
   },
-  deleteOrganization: (OrganizationService) => async (req, res, next) => {
+  deleteOrganization: async (req, res, next) => {
+    const logger = Container.get("logger");
+    logger.debug("Calling delete organization endpoint ");
+
     try {
       const { id } = req.params;
       const errors = validationResult(req);
@@ -116,27 +124,37 @@ module.exports = {
           );
       }
 
-      await OrganizationService.deleteOrganization({ _id: id });
+      const OrganizationServiceInstance = Container.get("organization.service");
 
-      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      await OrganizationServiceInstance.deleteOrganization({ _id: id });
+
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(202).json({ message: "delete successful" });
     } catch (error) {
       return next(new Error(error.message));
     }
   },
-  getAdminsByOrganization: (OrganizationService) => async (req, res, next) => {
+  getAdminsByOrganization: async (req, res, next) => {
+    const logger = Container.get("logger");
+    logger.debug("Calling get admins by organization endpoint ");
+
     try {
-      const organization = await OrganizationService.findAdminsByOrganization(
+      const OrganizationServiceInstance = Container.get("organization.service");
+
+      const organization = await OrganizationServiceInstance.findAdminsByOrganization(
         req.query
       );
 
-      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({ message: "Ok", data: organization });
     } catch (error) {
       return next(new Error(error.message));
     }
   },
-  getOrganizationById: (OrganizationService) => async (req, res, next) => {
+  getOrganizationById: async (req, res, next) => {
+    const logger = Container.get("logger");
+    logger.debug("Calling get organization by id endpoint ");
+
     try {
       const { id } = req.params;
       const errors = validationResult(req);
@@ -149,7 +167,9 @@ module.exports = {
           );
       }
 
-      const organization = await OrganizationService.findOneOrganization(
+      const OrganizationServiceInstance = Container.get("organization.service");
+
+      const organization = await OrganizationServiceInstance.findOneOrganization(
         { _id: id },
         { populate: true }
       );
@@ -168,21 +188,25 @@ module.exports = {
       return next(new Error(error.message));
     }
   },
-  getOrganizations: ({ organization_service: OrganizationService }) => async (
-    req,
-    res,
-    next
-  ) => {
-    try {
-      const organizations = await OrganizationService.list(req.query);
+  getOrganizations: async (req, res, next) => {
+    const logger = Container.get("logger");
+    logger.debug("Calling get organizations endpoint ");
 
-      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+    try {
+      const OrganizationServiceInstance = Container.get("organization.service");
+
+      const organizations = await OrganizationServiceInstance.list(req.query);
+
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({ message: "Ok", data: organizations });
     } catch (error) {
       return next(new Error(error.message));
     }
   },
-  updateOrganization: (OrganizationService) => async (req, res, next) => {
+  updateOrganization: async (req, res, next) => {
+    const logger = Container.get("logger");
+    logger.debug("Calling update organization endpoint ");
+
     try {
       const { id } = req.params;
       const { body: userInput } = req;
@@ -193,8 +217,10 @@ module.exports = {
         return next(new UserInputError(422, JSON.stringify(errors.array())));
       }
 
+      const OrganizationServiceInstance = Container.get("organization.service");
+
       if (userInput.org_name) {
-        const existingOrganization = await OrganizationService.findOneOrganization(
+        const existingOrganization = await OrganizationServiceInstance.findOneOrganization(
           {
             org_name: userInput.org_name,
           }
@@ -210,12 +236,13 @@ module.exports = {
           );
       }
 
-      const organization = await OrganizationService.findOneOrganizationAndUpdate(
+      const organization = await OrganizationServiceInstance.findOneOrganizationAndUpdate(
         { _id: id },
         userInput
       );
 
-      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
+
       return res
         .status(200)
         .json({ message: "Organization Updated", data: organization });

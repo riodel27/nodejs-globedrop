@@ -1,39 +1,24 @@
 const bodyParser = require("body-parser");
 const compression = require("compression");
-const morgan = require("morgan");
 const helmet = require("helmet");
 const swaggerUi = require("swagger-ui-express");
 const { isArray: _isArray } = require("lodash");
+const { Container } = require("typedi");
 
-const logger = require("./logger");
 const middleware = require("../utils/middleware");
 const swaggerSpec = require("../utils/swagger");
 
 const routes = require("../api/routes");
 
-// models
-const UserModel = require("../models/user.model");
-const OrganizationModel = require("../models/organization.model");
+module.exports = async ({ app }) => {
+  const config = Container.get("config");
+  const logger = Container.get("logger");
 
-// services
-const UserService = require("../services/user.service");
-const OrganizationService = require("../services/organization.service");
-
-module.exports = async ({ app, config }) => {
   app.use(
     require("morgan")(config.nodeEnv !== "production" ? "dev" : "combined")
   );
 
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-  // TODO: study dependency injection
-
-  /**Instantiate Services once and pass Models */
-  const user_service = new UserService(UserModel, config);
-  const organization_service = new OrganizationService(
-    OrganizationModel,
-    config
-  );
 
   app.use(helmet());
   app.use(compression());
@@ -44,14 +29,7 @@ module.exports = async ({ app, config }) => {
   // ...More middlewares
 
   // Load API routes
-  app.use(
-    config.api.prefix,
-    routes({
-      config,
-      organization_service,
-      user_service,
-    })
-  );
+  app.use(config.api.prefix, routes());
 
   app.get("/", (_, res) => res.send("NGO Directory App"));
 

@@ -1,28 +1,22 @@
-/* eslint-disable no-underscore-dangle */
-const { groupBy: _groupBy } = require("lodash");
-const { not } = require("ramda");
-const mongoose = require("mongoose");
-
-/** Business logic here */
+/** Business logic here... */
 
 class OrganizationService {
-  constructor(organization, config) {
-    this.model = organization;
-    this.config = config;
+  constructor(container) {
+    this.organization = container.get("organizationModel");
   }
 
   async createOrganization(data, options = {}) {
-    const organization = await this.model.create(data);
+    const organization = await this.organization.create(data);
     return organization;
   }
 
   async deleteOrganization(filter) {
-    const organization = await this.model.deleteOne(filter);
+    const organization = await this.organization.deleteOne(filter);
     return organization;
   }
 
   async findAdminsByOrganization(query, options = {}) {
-    const organization = await this.model
+    const organization = await this.organization
       .findOne(query)
       .populate(options.populate && "User");
 
@@ -30,16 +24,20 @@ class OrganizationService {
   }
 
   async findOneOrganization(query, options = {}) {
-    const organization = await this.model.findOne(query);
+    const organization = await this.organization.findOne(query);
 
     return organization;
   }
 
   async findOneOrganizationAndUpdate(filter, data, options = {}) {
-    const organization = await this.model.findOneAndUpdate(filter, data, {
-      new: true,
-      ...options,
-    });
+    const organization = await this.organization.findOneAndUpdate(
+      filter,
+      data,
+      {
+        new: true,
+        ...options,
+      }
+    );
 
     return organization;
   }
@@ -66,7 +64,7 @@ class OrganizationService {
       // const sortby = userSortByScope(SortBy ? SortBy.toLowerCase() : "f");
       // const sortorder = sortOrder(SortOrder ? SortOrder.toLowerCase() : "a");
 
-      const organizations = await this.model.find(query, null, {
+      const organizations = await this.organization.find(query, null, {
         // sort: { [sortby]: sortorder },
         skip: offset,
         limit: limit,

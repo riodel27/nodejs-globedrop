@@ -1,30 +1,23 @@
-/* eslint-disable no-underscore-dangle */
-const { groupBy: _groupBy } = require("lodash");
-const { not } = require("ramda");
-const mongoose = require("mongoose");
-
-const { SendEmail, sortOrder, userSortByScope } = require("../utils/helper");
-
-/**Business logic here */
+/** Business logic here... */
 
 class UserService {
-  constructor(user, config) {
-    this.model = user;
-    this.config = config;
+  constructor(container) {
+    this.user = container.get("userModel");
+    this.logger = container.get("logger");
   }
 
   async createUser(data, options = {}) {
-    const user = await this.model.create(data);
+    const user = await this.user.create(data);
     return user;
   }
 
   async deleteUser(filter) {
-    const user = await this.model.deleteOne(filter);
+    const user = await this.user.deleteOne(filter);
     return user;
   }
 
   async findOneUser(query, options = {}) {
-    const user = await this.model
+    const user = await this.user
       .findOne(query)
       .populate(options.populate && "Organization");
 
@@ -32,7 +25,7 @@ class UserService {
   }
 
   async findOrganizationsByUser(query, options = {}) {
-    const user = await this.model
+    const user = await this.user
       .findOne(query)
       .populate(options.populate && "Organization");
 
@@ -40,7 +33,7 @@ class UserService {
   }
 
   async findOneUserAndUpdate(filter, data, options = {}) {
-    const user = await this.model.findOneAndUpdate(filter, data, {
+    const user = await this.user.findOneAndUpdate(filter, data, {
       new: true,
       ...options,
     });
@@ -75,7 +68,7 @@ class UserService {
       // const sortby = userSortByScope(SortBy ? SortBy.toLowerCase() : "f");
       // const sortorder = sortOrder(SortOrder ? SortOrder.toLowerCase() : "a");
 
-      const users = await this.model.find(query, null, {
+      const users = await this.user.find(query, null, {
         // sort: { [sortby]: sortorder },
         skip: offset,
         limit: limit,
@@ -90,7 +83,7 @@ class UserService {
   }
 
   async listUsersByUserType(query, options = {}) {
-    return await this.model.find(query);
+    return await this.user.find(query);
   }
 
   static password() {

@@ -6,38 +6,33 @@ const OrganizationController = require("../../controllers/organization.controlle
 
 const router = express.Router();
 
-module.exports = (params) => {
-  const { config, organization_service: OrganizationService } = params;
-
+module.exports = () => {
   router.use(middlware.isAuthenticated);
 
   router.post(
     "/",
     OrganizationController.validate("createOrganization"),
-    OrganizationController.createOrganization(OrganizationService)
+    OrganizationController.createOrganization
   );
 
   router.get(
     "/:id",
     OrganizationController.validate("getOrganizationById"),
-    OrganizationController.getOrganizationById(OrganizationService)
+    OrganizationController.getOrganizationById
   );
 
-  router.get(
-    "/:id/admins",
-    OrganizationController.getAdminsByOrganization(OrganizationService)
-  );
+  router.get("/:id/admins", OrganizationController.getAdminsByOrganization);
 
   router.put(
     "/:id",
     OrganizationController.validate("updateOrganization"),
-    OrganizationController.updateOrganization(OrganizationService)
+    OrganizationController.updateOrganization
   );
 
   router.delete(
     "/:id",
     OrganizationController.validate("deleteOrganization"),
-    OrganizationController.deleteOrganization(OrganizationService)
+    OrganizationController.deleteOrganization
   );
 
   return router;
