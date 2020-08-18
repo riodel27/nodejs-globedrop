@@ -254,38 +254,25 @@ module.exports = {
     try {
       const { email, password } = req.body;
 
-      const config = Container.get("config");
       const UserServiceInstance = Container.get("user.service");
 
-      const user = await UserServiceInstance.findOneUser({ email });
+      const {
+        user,
+        access_token,
+        refresh_token,
+        expires_in,
+      } = await UserServiceInstance.login(email, password);
 
-      if (not(user))
-        return next(new ForbiddenError(401, "Incorrect email or password."));
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
 
-      const valid =
-        password &&
-        user.password &&
-        (await bcrypt.compare(password, user.password));
-
-      if (not(valid))
-        return next(new ForbiddenError(401, "Incorrect email or password."));
-
-      const access_token = jwt.sign(user.toJSON(), config.secretToken, {
-        expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
-      });
-
-      const refresh_token = jwt.sign(user.toJSON(), config.secretRefreshToken, {
-        expiresIn: `${config.refreshTokenTtl}`,
-      });
-
-      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({
+        user: user,
         access_token,
         refresh_token: refresh_token,
-        expires_in: config.accessTokenTtl, // return in hours.
+        expires_in, // return in hours.
       });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   logout: async (req, res, next) => {

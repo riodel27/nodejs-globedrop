@@ -1,3 +1,11 @@
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { not } = require("ramda");
+
+const config = require("../config")[process.env.NODE_ENV || "development"];
+
+const { ForbiddenError, CustomError } = require("../utils/error");
+
 /** Business logic here... */
 
 class UserService {
@@ -82,12 +90,45 @@ class UserService {
     }
   }
 
+  async login(email, password) {
+    const userRecord = await this.user.findOne({ email });
+
+    if (not(userRecord))
+      throw new ForbiddenError(401, "Incorrect email or password.");
+
+    const validPassword =
+      password &&
+      userRecord.password &&
+      (await bcrypt.compare(password, userRecord.password));
+
+    if (not(validPassword))
+      throw new ForbiddenError(401, "Incorrect email or password.");
+
+    return {
+      user: userRecord,
+      access_token: UserService.generateToken(userRecord),
+      refresh_token: UserService.generateToken(userRecord, true),
+      expires_in: config.accessTokenTtl,
+    };
+  }
+
   async listUsersByUserType(query, options = {}) {
     return await this.user.find(query);
   }
 
   static password() {
     return Math.random().toString(36).substring(2, 15);
+  }
+
+  static generateToken(user, refreshtoken = false) {
+    if (refreshtoken) {
+      return jwt.sign(user.toJSON(), config.secretRefreshToken, {
+        expiresIn: `${config.refreshTokenTtl}`,
+      });
+    }
+    return jwt.sign(user.toJSON(), config.secretToken, {
+      expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
+    });
   }
 }
 
