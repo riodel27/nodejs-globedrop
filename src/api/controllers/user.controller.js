@@ -102,7 +102,7 @@ module.exports = {
   },
   createUser: async (req, res, next) => {
     const logger = Container.get("logger");
-    logger.debug("Calling create user endpoint with body: %o", req.body);
+    logger.debug("Calling create user endpoint with body: ", req.body);
 
     try {
       const { body: userInput } = req;
@@ -151,7 +151,7 @@ module.exports = {
       logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(202).json({ message: "delete successful" });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   getUserById: async (req, res, next) => {
@@ -160,6 +160,7 @@ module.exports = {
 
     try {
       const { id } = req.params;
+
       const errors = validationResult(req);
 
       if (not(errors.isEmpty())) {
@@ -175,12 +176,10 @@ module.exports = {
         { populate: true }
       );
 
-      if (not(user))
-        return next(new CustomError("USER_NOT_FOUND", 404, "User Not Found"));
-
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({ message: "Ok", data: user });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   getUsers: async (req, res, next) => {
@@ -281,7 +280,7 @@ module.exports = {
       // logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({ success: true });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   refreshToken: async (req, res, next) => {
@@ -291,22 +290,16 @@ module.exports = {
     try {
       const { refresh_token: refreshToken } = req.params;
 
-      const decoded = await jwtVerifyRefreshToken(refreshToken);
-      const { iat, exp, ...user } = decoded;
+      const UserServiceInstance = Container.get("user.service");
 
-      const config = Container.get("config");
+      const {
+        access_token,
+        refresh_token,
+      } = await UserServiceInstance.refreshToken(refreshToken);
 
-      const accessToken = jwt.sign(user, config.secretToken, {
-        expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
-      });
-
-      const refresh_token = jwt.sign(user, config.secretRefreshToken, {
-        expiresIn: `${config.refreshTokenTtl}`,
-      });
-
-      // logger.info(`${req.method} ${req.originalUrl} ${200}`);
+      logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({
-        access_token: accessToken,
+        access_token,
         refresh_token,
       });
     } catch (error) {
@@ -329,31 +322,12 @@ module.exports = {
 
       const UserServiceInstance = Container.get("user.service");
 
-      if (userInput.email) {
-        const existingUserEmail = await UserServiceInstance.findOneUser({
-          email: userInput.email,
-        });
-
-        if (existingUserEmail && existingUserEmail.id !== id)
-          return next(
-            new CustomError("EMAIL_ALREADY_EXIST", 400, "Email already exist.")
-          );
-      }
-
-      const password =
-        userInput.password &&
-        userInput.password.trim() &&
-        (await bcrypt.hash(userInput.password.trim(), 12));
-
-      const user = await UserServiceInstance.findOneUserAndUpdate(
-        { _id: id },
-        { ...userInput, ...(password && { password }) }
-      );
+      const user = await UserServiceInstance.updateUser(id, userInput);
 
       logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({ message: "User Updated", data: user });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
 };

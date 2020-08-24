@@ -1,10 +1,13 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { not } = require("ramda");
+const { validationResult } = require("express-validator");
+const { isObject } = require("lodash");
 
 const config = require("../config")[process.env.NODE_ENV || "development"];
 
 const { ForbiddenError, CustomError } = require("../utils/error");
+const { jwtVerifyRefreshToken } = require("../utils/helper");
 
 /** Business logic here... */
 
@@ -38,6 +41,9 @@ class UserService {
       .findOne(query)
       .populate(options.populate && "Organization");
 
+    if (not(user))
+      return next(new CustomError("USER_NOT_FOUND", 404, "User Not Found"));
+
     return user;
   }
 
@@ -49,12 +55,29 @@ class UserService {
     return user.organizations;
   }
 
-  async findOneUserAndUpdate(filter, data, options = {}) {
-    const user = await this.user.findOneAndUpdate(filter, data, {
-      new: true,
-      ...options,
-    });
-    // .populate("profession");
+  async updateUser(id, userInput, options = {}) {
+    if (userInput.email) {
+      const existingUserEmail = await this.user.findOne({
+        email: userInput.email,
+      });
+
+      if (existingUserEmail && existingUserEmail.id !== id)
+        throw new CustomError(
+          "EMAIL_ALREADY_EXIST",
+          400,
+          "User with this email already exist."
+        );
+    }
+
+    const password =
+      userInput.password &&
+      userInput.password.trim() &&
+      (await bcrypt.hash(userInput.password.trim(), 12));
+
+    const user = await this.user.findOneAndUpdate(
+      { _id: id },
+      { ...userInput, ...(password && { password }) }
+    );
 
     return user;
   }
@@ -121,6 +144,17 @@ class UserService {
     };
   }
 
+  async refreshToken(token) {
+    const { iat, exp, ...user } = await jwtVerifyRefreshToken(token);
+
+    return {
+      user,
+      access_token: UserService.generateToken(user),
+      refresh_token: UserService.generateToken(user, true),
+      expires_in: config.refreshTokenTtl,
+    };
+  }
+
   async listUsersByUserType(query, options = {}) {
     return await this.user.find(query);
   }
@@ -131,11 +165,15 @@ class UserService {
 
   static generateToken(user, refreshtoken = false) {
     if (refreshtoken) {
-      return jwt.sign(user.toJSON(), config.secretRefreshToken, {
-        expiresIn: `${config.refreshTokenTtl}`,
-      });
+      return jwt.sign(
+        isObject(user) ? user : user.toJSON(),
+        config.secretRefreshToken,
+        {
+          expiresIn: `${config.refreshTokenTtl}`,
+        }
+      );
     }
-    return jwt.sign(user.toJSON(), config.secretToken, {
+    return jwt.sign(isObject(user) ? user : user.toJSON(), config.secretToken, {
       expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
     });
   }

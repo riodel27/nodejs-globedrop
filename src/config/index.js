@@ -3,6 +3,7 @@ require("dotenv").config();
 module.exports = {
   development: {
     port: 3000,
+    redisPort: 6379,
     logLevel: "debug",
     nodeEnv: "development",
     database: {
@@ -18,6 +19,7 @@ module.exports = {
   },
   production: {
     port: process.env.PORT,
+    redisPort: process.env.REDIS_PORT,
     logLevel: process.env.LOG_LEVEL,
     nodeEnv: process.env.NODE_ENV,
     database: {

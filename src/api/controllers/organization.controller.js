@@ -78,21 +78,6 @@ module.exports = {
 
       const OrganizationServiceInstance = Container.get("organization.service");
 
-      const existingOrganization = await OrganizationServiceInstance.findOneOrganization(
-        {
-          org_name: userInput.org_name,
-        }
-      );
-
-      if (existingOrganization)
-        return next(
-          new CustomError(
-            "ORGANIZATION_ALREADY_EXIST",
-            400,
-            "Organization already exist."
-          )
-        );
-
       const organization = await OrganizationServiceInstance.createOrganization(
         userInput
       );
@@ -104,7 +89,7 @@ module.exports = {
         data: organization,
       });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   deleteOrganization: async (req, res, next) => {
@@ -131,7 +116,7 @@ module.exports = {
       logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(202).json({ message: "delete successful" });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   getAdminsByOrganization: async (req, res, next) => {
@@ -148,7 +133,7 @@ module.exports = {
       logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({ message: "Ok", data: organization });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   getOrganizationById: async (req, res, next) => {
@@ -185,7 +170,7 @@ module.exports = {
 
       return res.status(200).json({ message: "Ok", data: organization });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   getOrganizations: async (req, res, next) => {
@@ -200,16 +185,17 @@ module.exports = {
       logger.info(`${req.method} ${req.originalUrl} ${200}`);
       return res.status(200).json({ message: "Ok", data: organizations });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
   updateOrganization: async (req, res, next) => {
+    const OrganizationServiceInstance = Container.get("organization.service");
     const logger = Container.get("logger");
+
     logger.debug("Calling update organization endpoint ");
 
     try {
       const { id } = req.params;
-      const { body: userInput } = req;
 
       const errors = validationResult(req);
 
@@ -217,28 +203,9 @@ module.exports = {
         return next(new UserInputError(422, JSON.stringify(errors.array())));
       }
 
-      const OrganizationServiceInstance = Container.get("organization.service");
-
-      if (userInput.org_name) {
-        const existingOrganization = await OrganizationServiceInstance.findOneOrganization(
-          {
-            org_name: userInput.org_name,
-          }
-        );
-
-        if (existingOrganization && existingOrganization.id !== id)
-          return next(
-            new CustomError(
-              "ORGANIZATION_ALREADY_EXIST",
-              400,
-              "organization name already exist."
-            )
-          );
-      }
-
-      const organization = await OrganizationServiceInstance.findOneOrganizationAndUpdate(
-        { _id: id },
-        userInput
+      const organization = await OrganizationServiceInstance.updateOrganization(
+        id,
+        req.body
       );
 
       logger.info(`${req.method} ${req.originalUrl} ${200}`);
@@ -247,7 +214,7 @@ module.exports = {
         .status(200)
         .json({ message: "Organization Updated", data: organization });
     } catch (error) {
-      return next(new Error(error.message));
+      return next(error);
     }
   },
 };

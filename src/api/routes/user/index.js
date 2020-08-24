@@ -17,7 +17,7 @@ module.exports = () => {
 
   router.post("/logout", UserController.logout);
 
-  router.post("/token/:refresh_token", UserController.refreshToken);
+  router.get("/token/:refresh_token", UserController.refreshToken);
 
   router.use(middlware.isAuthenticated);
 

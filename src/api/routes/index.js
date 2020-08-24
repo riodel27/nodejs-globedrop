@@ -1,11 +1,11 @@
 const express = require("express");
+
 const middleware = require("./middlewares");
 
-// require the index file
 const organizationRoute = require("./organization");
 const userRoute = require("./user");
+const recipeRoute = require("./recipe"); // demo route for redis caching...
 
-// controllers
 const OrganizationController = require("../controllers/organization.controller");
 const UserController = require("../controllers/user.controller");
 
@@ -14,6 +14,7 @@ const router = express.Router();
 module.exports = () => {
   router.use("/organization", organizationRoute());
   router.use("/user", userRoute());
+  router.use("/recipe", recipeRoute()); // demo route for redis caching...
 
   router.use(middleware.isAuthenticated);
 

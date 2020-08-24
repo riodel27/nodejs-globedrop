@@ -5,8 +5,19 @@ class OrganizationService {
     this.organization = container.get("organizationModel");
   }
 
-  async createOrganization(data, options = {}) {
-    const organization = await this.organization.create(data);
+  async createOrganization(userInput, options = {}) {
+    const existingOrganization = await this.organization.findOne({
+      org_name: userInput.org_name,
+    });
+
+    if (existingOrganization)
+      throw new CustomError(
+        "ORGANIZATION_ALREADY_EXIST",
+        400,
+        "Organization already exist."
+      );
+
+    const organization = await this.organization.create(userInput);
     return organization;
   }
 
@@ -29,10 +40,23 @@ class OrganizationService {
     return organization;
   }
 
-  async findOneOrganizationAndUpdate(filter, data, options = {}) {
+  async updateOrganization(id, userInput, options = {}) {
+    if (userInput.org_name) {
+      const existingOrganization = this.organization.findOne({
+        org_name: userInput.org_name,
+      });
+
+      if (existingOrganization && existingOrganization.id !== id)
+        throw new CustomError(
+          "ORGANIZATION_ALREADY_EXIST",
+          400,
+          "organization name already exist."
+        );
+    }
+
     const organization = await this.organization.findOneAndUpdate(
-      filter,
-      data,
+      { _id: id },
+      userInput,
       {
         new: true,
         ...options,
