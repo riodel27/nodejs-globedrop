@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "nodemon ./src/server.js",
     "start": "pm2 start ./src/server.js --name globedrop",
-    "test": "echo \"Error: no test specified\" && ebxit 1"
+    "test": "NODE_ENV=test mocha --recursive --timeout 10000"
   },
   "author": "Rio Del Pamaong",
   "license": "ISC",
@@ -31,7 +31,10 @@
     "@hapi/joi": "^17.1.1",
     "bcrypt": "^5.0.0",
     "bcryptjs": "^2.4.3",
+    "chai": "^4.2.0",
+    "chai-http": "^4.3.0",
     "dotenv": "^8.2.0",
+    "mocha": "^8.1.1",
     "nodemon": "^2.0.4"
   }
 }

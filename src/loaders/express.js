@@ -14,6 +14,7 @@ module.exports = async ({ app }) => {
   const config = Container.get("config");
   const logger = Container.get("logger");
 
+  //TODO: disable loggger for test environment.
   app.use(
     require("morgan")(config.nodeEnv !== "production" ? "dev" : "combined")
   );

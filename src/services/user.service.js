@@ -86,7 +86,7 @@ class UserService {
     return UserService.password();
   }
 
-  async list(options) {
+  async list(options = {}) {
     try {
       const {
         filter: Filter,

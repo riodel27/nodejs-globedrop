@@ -34,4 +34,20 @@ module.exports = {
     },
   },
   staging: {},
+  test: {
+    port: 3000,
+    redisPort: 6379,
+    logLevel: "debug",
+    nodeEnv: "test",
+    database: {
+      url: "mongodb://localhost:27017/TestGlobeDrop",
+    },
+    accessTokenTtl: "24",
+    secretToken: "globedrop",
+    secretRefreshToken: "globedrop123",
+    refreshTokenTtl: "30d",
+    api: {
+      prefix: "/api",
+    },
+  },
 };

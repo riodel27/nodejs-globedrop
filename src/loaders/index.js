@@ -9,14 +9,6 @@ module.exports.init = async ({ expressApp, config }) => {
   const mongoConnection = await mongooseLoader(config.database.url);
   Logger.info("✌️ DB loaded and connected!");
 
-  /**
-   * WTF is going on here?
-   *
-   * We are injecting the mongoose models into the DI container.
-   * I know this is controversial but will provide a lot of flexibility at the time
-   * of writing unit tests, just go and check how beautiful they are!
-   */
-
   const userModel = {
     name: "userModel",
     model: require("../models/user.model"),
