@@ -1,220 +1,196 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
-const { Container } = require("typedi");
-const { body, validationResult, param } = require("express-validator");
-const { not } = require("ramda");
+const { Container } = require('typedi')
+const { body, validationResult, param } = require('express-validator')
+const { not } = require('ramda')
 
-const {
-  UserInputError,
-  CustomError,
-  ForbiddenError,
-} = require("../../utils/error");
+const { UserInputError, CustomError } = require('../../utils/error')
 
 module.exports = {
-  validate: (method) => {
-    switch (method) {
-      case "createOrganization": {
-        return [body("org_name", "org_name is required.").notEmpty()];
+   // eslint-disable-next-line consistent-return
+   validate: (method) => {
+      switch (method) {
+         case 'createOrganization': {
+            return [body('org_name', 'org_name is required.').notEmpty()]
+         }
+         case 'deleteOrganization': {
+            return [
+               param('id', 'Organization ID is required').custom((id) => {
+                  if (not(id)) return false
+
+                  if (id === '') return false
+
+                  if (not(mongoose.Types.ObjectId.isValid(id)))
+                     throw new Error(`Invalid Organization ID: ${id}`)
+
+                  return true
+               }),
+            ]
+         }
+         case 'getOrganizationById': {
+            return [
+               param('id', 'Organization ID is required').custom((id) => {
+                  if (not(id)) return false
+
+                  if (id === '') return false
+
+                  if (not(mongoose.Types.ObjectId.isValid(id)))
+                     throw new Error(`Invalid organization ID: ${id}`)
+
+                  return true
+               }),
+            ]
+         }
+         case 'updateOrganization': {
+            return [
+               param('id', 'Organization ID is required').custom((id) => {
+                  if (not(id)) return false
+
+                  if (id === '') return false
+
+                  if (not(mongoose.Types.ObjectId.isValid(id)))
+                     throw new Error(`Invalid Organization ID: ${id}`)
+
+                  return true
+               }),
+            ]
+         }
+         default:
+            break
       }
-      case "deleteOrganization": {
-        return [
-          param("id", "Organization ID is required").custom((id) => {
-            if (not(id)) return false;
+   },
+   createOrganization: async (req, res, next) => {
+      const logger = Container.get('logger')
+      logger.debug('Calling create organization endpoint with body:%o', req.body)
 
-            if (id === "") return false;
+      try {
+         const { body: userInput } = req
 
-            if (not(mongoose.Types.ObjectId.isValid(id)))
-              throw new Error(`Invalid Organization ID: ${id}`);
+         const errors = validationResult(req)
 
-            return true;
-          }),
-        ];
+         // validation error
+         if (not(errors.isEmpty()))
+            return next(new UserInputError(422, JSON.stringify(errors.array())))
+
+         const OrganizationServiceInstance = Container.get('organization.service')
+
+         const organization = await OrganizationServiceInstance.createOrganization(userInput)
+
+         logger.info(`${req.method} ${req.originalUrl} ${200}`)
+
+         return res.status(201).json({
+            message: 'Organization Inserted',
+            data: organization,
+         })
+      } catch (error) {
+         return next(error)
       }
-      case "getOrganizationById": {
-        return [
-          param("id", "Organization ID is required").custom((id) => {
-            if (not(id)) return false;
+   },
+   deleteOrganization: async (req, res, next) => {
+      const logger = Container.get('logger')
+      logger.debug('Calling delete organization endpoint ')
 
-            if (id === "") return false;
+      try {
+         const { id } = req.params
+         const errors = validationResult(req)
 
-            if (not(mongoose.Types.ObjectId.isValid(id)))
-              throw new Error(`Invalid organization ID: ${id}`);
+         if (not(errors.isEmpty())) {
+            const error = errors.errors[0]
 
-            return true;
-          }),
-        ];
+            if (error.param === 'id')
+               return next(new CustomError('INVALID_ORGANIZATION_ID', 422, error.msg))
+         }
+
+         const OrganizationServiceInstance = Container.get('organization.service')
+
+         await OrganizationServiceInstance.deleteOrganization({ _id: id })
+
+         logger.info(`${req.method} ${req.originalUrl} ${200}`)
+         return res.status(202).json({ message: 'delete successful' })
+      } catch (error) {
+         return next(error)
       }
-      case "updateOrganization": {
-        return [
-          param("id", "Organization ID is required").custom((id) => {
-            if (not(id)) return false;
+   },
+   getAdminsByOrganization: async (req, res, next) => {
+      const logger = Container.get('logger')
+      logger.debug('Calling get admins by organization endpoint ')
 
-            if (id === "") return false;
+      try {
+         const OrganizationServiceInstance = Container.get('organization.service')
 
-            if (not(mongoose.Types.ObjectId.isValid(id)))
-              throw new Error(`Invalid Organization ID: ${id}`);
+         const organization = await OrganizationServiceInstance.findAdminsByOrganization(req.query)
 
-            return true;
-          }),
-        ];
+         logger.info(`${req.method} ${req.originalUrl} ${200}`)
+         return res.status(200).json({ message: 'Ok', data: organization })
+      } catch (error) {
+         return next(error)
       }
-      default:
-        break;
-    }
-  },
-  createOrganization: async (req, res, next) => {
-    const logger = Container.get("logger");
-    logger.debug("Calling create organization endpoint with body:%o", req.body);
+   },
+   getOrganizationById: async (req, res, next) => {
+      const logger = Container.get('logger')
+      logger.debug('Calling get organization by id endpoint ')
 
-    try {
-      const { body: userInput } = req;
+      try {
+         const { id } = req.params
+         const errors = validationResult(req)
 
-      const errors = validationResult(req);
+         if (not(errors.isEmpty())) {
+            const error = errors.errors[0]
+            if (error.param === 'id')
+               return next(new CustomError('INVALID_ORGANIZATION_ID', 422, error.msg))
+         }
 
-      // validation error
-      if (not(errors.isEmpty())) {
-        return next(new UserInputError(422, JSON.stringify(errors.array())));
+         const OrganizationServiceInstance = Container.get('organization.service')
+
+         const organization = await OrganizationServiceInstance.findOneOrganization(
+            { _id: id },
+            { populate: true },
+         )
+
+         if (not(organization))
+            return next(new CustomError('ORGANIZATION_NOT_FOUND', 404, 'Organization Not Found'))
+
+         return res.status(200).json({ message: 'Ok', data: organization })
+      } catch (error) {
+         return next(error)
       }
+   },
+   getOrganizations: async (req, res, next) => {
+      const logger = Container.get('logger')
+      logger.debug('Calling get organizations endpoint ')
 
-      const OrganizationServiceInstance = Container.get("organization.service");
+      try {
+         const OrganizationServiceInstance = Container.get('organization.service')
 
-      const organization = await OrganizationServiceInstance.createOrganization(
-        userInput
-      );
+         const organizations = await OrganizationServiceInstance.list(req.query)
 
-      logger.info(`${req.method} ${req.originalUrl} ${200}`);
-
-      return res.status(201).json({
-        message: "Organization Inserted",
-        data: organization,
-      });
-    } catch (error) {
-      return next(error);
-    }
-  },
-  deleteOrganization: async (req, res, next) => {
-    const logger = Container.get("logger");
-    logger.debug("Calling delete organization endpoint ");
-
-    try {
-      const { id } = req.params;
-      const errors = validationResult(req);
-
-      if (not(errors.isEmpty())) {
-        const error = errors.errors[0];
-
-        if (error.param === "id")
-          return next(
-            new CustomError("INVALID_ORGANIZATION_ID", 422, error.msg)
-          );
+         logger.info(`${req.method} ${req.originalUrl} ${200}`)
+         return res.status(200).json({ message: 'Ok', data: organizations })
+      } catch (error) {
+         return next(error)
       }
+   },
+   updateOrganization: async (req, res, next) => {
+      const OrganizationServiceInstance = Container.get('organization.service')
+      const logger = Container.get('logger')
 
-      const OrganizationServiceInstance = Container.get("organization.service");
+      logger.debug('Calling update organization endpoint ')
 
-      await OrganizationServiceInstance.deleteOrganization({ _id: id });
+      try {
+         const { id } = req.params
 
-      logger.info(`${req.method} ${req.originalUrl} ${200}`);
-      return res.status(202).json({ message: "delete successful" });
-    } catch (error) {
-      return next(error);
-    }
-  },
-  getAdminsByOrganization: async (req, res, next) => {
-    const logger = Container.get("logger");
-    logger.debug("Calling get admins by organization endpoint ");
+         const errors = validationResult(req)
 
-    try {
-      const OrganizationServiceInstance = Container.get("organization.service");
+         if (not(errors.isEmpty()))
+            return next(new UserInputError(422, JSON.stringify(errors.array())))
 
-      const organization = await OrganizationServiceInstance.findAdminsByOrganization(
-        req.query
-      );
+         const organization = await OrganizationServiceInstance.updateOrganization(id, req.body)
 
-      logger.info(`${req.method} ${req.originalUrl} ${200}`);
-      return res.status(200).json({ message: "Ok", data: organization });
-    } catch (error) {
-      return next(error);
-    }
-  },
-  getOrganizationById: async (req, res, next) => {
-    const logger = Container.get("logger");
-    logger.debug("Calling get organization by id endpoint ");
+         logger.info(`${req.method} ${req.originalUrl} ${200}`)
 
-    try {
-      const { id } = req.params;
-      const errors = validationResult(req);
-
-      if (not(errors.isEmpty())) {
-        const error = errors.errors[0];
-        if (error.param === "id")
-          return next(
-            new CustomError("INVALID_ORGANIZATION_ID", 422, error.msg)
-          );
+         return res.status(200).json({ message: 'Organization Updated', data: organization })
+      } catch (error) {
+         return next(error)
       }
-
-      const OrganizationServiceInstance = Container.get("organization.service");
-
-      const organization = await OrganizationServiceInstance.findOneOrganization(
-        { _id: id },
-        { populate: true }
-      );
-
-      if (not(organization))
-        return next(
-          new CustomError(
-            "ORGANIZATION_NOT_FOUND",
-            404,
-            "Organization Not Found"
-          )
-        );
-
-      return res.status(200).json({ message: "Ok", data: organization });
-    } catch (error) {
-      return next(error);
-    }
-  },
-  getOrganizations: async (req, res, next) => {
-    const logger = Container.get("logger");
-    logger.debug("Calling get organizations endpoint ");
-
-    try {
-      const OrganizationServiceInstance = Container.get("organization.service");
-
-      const organizations = await OrganizationServiceInstance.list(req.query);
-
-      logger.info(`${req.method} ${req.originalUrl} ${200}`);
-      return res.status(200).json({ message: "Ok", data: organizations });
-    } catch (error) {
-      return next(error);
-    }
-  },
-  updateOrganization: async (req, res, next) => {
-    const OrganizationServiceInstance = Container.get("organization.service");
-    const logger = Container.get("logger");
-
-    logger.debug("Calling update organization endpoint ");
-
-    try {
-      const { id } = req.params;
-
-      const errors = validationResult(req);
-
-      if (not(errors.isEmpty())) {
-        return next(new UserInputError(422, JSON.stringify(errors.array())));
-      }
-
-      const organization = await OrganizationServiceInstance.updateOrganization(
-        id,
-        req.body
-      );
-
-      logger.info(`${req.method} ${req.originalUrl} ${200}`);
-
-      return res
-        .status(200)
-        .json({ message: "Organization Updated", data: organization });
-    } catch (error) {
-      return next(error);
-    }
-  },
-};
+   },
+}

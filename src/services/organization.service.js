@@ -1,106 +1,100 @@
 /** Business logic here... */
 
+const { CustomError } = require('../utils/error')
+
 class OrganizationService {
-  constructor(container) {
-    this.organization = container.get("organizationModel");
-  }
+   constructor(container) {
+      this.organization = container.get('organizationModel')
+   }
 
-  async createOrganization(userInput, options = {}) {
-    const existingOrganization = await this.organization.findOne({
-      org_name: userInput.org_name,
-    });
+   async createOrganization(userInput, options = {}) {
+      const existingOrganization = await this.organization.findOne({
+         org_name: userInput.org_name,
+      })
 
-    if (existingOrganization)
-      throw new CustomError(
-        "ORGANIZATION_ALREADY_EXIST",
-        400,
-        "Organization already exist."
-      );
+      if (existingOrganization)
+         throw new CustomError('ORGANIZATION_ALREADY_EXIST', 400, 'Organization already exist.')
 
-    const organization = await this.organization.create(userInput);
-    return organization;
-  }
+      const organization = await this.organization.create(userInput)
+      return organization
+   }
 
-  async deleteOrganization(filter) {
-    const organization = await this.organization.deleteOne(filter);
-    return organization;
-  }
+   async deleteOrganization(filter) {
+      const organization = await this.organization.deleteOne(filter)
+      return organization
+   }
 
-  async findAdminsByOrganization(query, options = {}) {
-    const organization = await this.organization
-      .findOne(query)
-      .populate(options.populate && "User");
+   async findAdminsByOrganization(query, options = {}) {
+      const organization = await this.organization
+         .findOne(query)
+         .populate(options.populate && 'User')
 
-    return organization.admins;
-  }
+      return organization.admins
+   }
 
-  async findOneOrganization(query, options = {}) {
-    const organization = await this.organization.findOne(query);
+   async findOneOrganization(query, options = {}) {
+      const organization = await this.organization.findOne(query)
 
-    return organization;
-  }
+      return organization
+   }
 
-  async updateOrganization(id, userInput, options = {}) {
-    if (userInput.org_name) {
-      const existingOrganization = this.organization.findOne({
-        org_name: userInput.org_name,
-      });
+   async updateOrganization(id, userInput, options = {}) {
+      if (userInput.org_name) {
+         const existingOrganization = this.organization.findOne({
+            org_name: userInput.org_name,
+         })
 
-      if (existingOrganization && existingOrganization.id !== id)
-        throw new CustomError(
-          "ORGANIZATION_ALREADY_EXIST",
-          400,
-          "organization name already exist."
-        );
-    }
-
-    const organization = await this.organization.findOneAndUpdate(
-      { _id: id },
-      userInput,
-      {
-        new: true,
-        ...options,
+         if (existingOrganization && existingOrganization.id !== id)
+            throw new CustomError(
+               'ORGANIZATION_ALREADY_EXIST',
+               400,
+               'organization name already exist.',
+            )
       }
-    );
 
-    return organization;
-  }
+      const organization = await this.organization.findOneAndUpdate({ _id: id }, userInput, {
+         new: true,
+         ...options,
+      })
 
-  async list(options) {
-    try {
-      const {
-        filter: Filter,
-        offset: Offset,
-        max,
-        sortby: SortBy,
-        sortorder: SortOrder,
-      } = options;
+      return organization
+   }
 
-      const query =
-        Filter && Filter.trim()
-          ? {
-              $text: { $search: Filter.trim() },
-            }
-          : {};
+   async list(options) {
+      try {
+         const {
+            filter: Filter,
+            offset: Offset,
+            max,
+            sortby: SortBy,
+            sortorder: SortOrder,
+         } = options
 
-      const offset = Offset ? Number(JSON.parse(Offset)) : 0;
-      const limit = max ? Number(JSON.parse(max)) : 10;
-      // const sortby = userSortByScope(SortBy ? SortBy.toLowerCase() : "f");
-      // const sortorder = sortOrder(SortOrder ? SortOrder.toLowerCase() : "a");
+         const query =
+            Filter && Filter.trim()
+               ? {
+                    $text: { $search: Filter.trim() },
+                 }
+               : {}
 
-      const organizations = await this.organization.find(query, null, {
-        // sort: { [sortby]: sortorder },
-        skip: offset,
-        limit: limit,
-      });
-      // .populate("profession")
-      // .populate("role");
+         const offset = Offset ? Number(JSON.parse(Offset)) : 0
+         const limit = max ? Number(JSON.parse(max)) : 10
+         // const sortby = userSortByScope(SortBy ? SortBy.toLowerCase() : "f");
+         // const sortorder = sortOrder(SortOrder ? SortOrder.toLowerCase() : "a");
 
-      return organizations;
-    } catch (error) {
-      throw Error(error);
-    }
-  }
+         const organizations = await this.organization.find(query, null, {
+            // sort: { [sortby]: sortorder },
+            skip: offset,
+            limit: limit,
+         })
+         // .populate("profession")
+         // .populate("role");
+
+         return organizations
+      } catch (error) {
+         throw Error(error)
+      }
+   }
 }
 
-module.exports = OrganizationService;
+module.exports = OrganizationService
