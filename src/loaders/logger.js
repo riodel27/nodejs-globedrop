@@ -39,13 +39,13 @@ const productionFormat = format.combine(
 
 let logger
 
-if (config.nodeEnv !== 'production') {
+if (config.nodeEnv === 'development') {
    logger = createLogger({
       level,
       format: developmentFormat,
       transports: [new transports.Console()],
    })
-} else {
+} else if (config.nodeEnv === 'production') {
    logger = createLogger({
       level,
       format: productionFormat,
@@ -65,6 +65,10 @@ if (config.nodeEnv !== 'production') {
          logger.info(message)
       },
    }
+} else {
+   logger = createLogger({
+      silent: true,
+   })
 }
 
 module.exports = logger

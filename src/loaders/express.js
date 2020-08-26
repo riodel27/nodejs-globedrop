@@ -15,8 +15,8 @@ module.exports = async ({ app }) => {
    const config = Container.get('config')
    const logger = Container.get('logger')
 
-   // TODO: disable loggger for test environment.
-   app.use(require('morgan')(config.nodeEnv !== 'production' ? 'dev' : 'combined'))
+   if (config.nodeEnv !== 'test')
+      app.use(require('morgan')(config.nodeEnv !== 'production' ? 'dev' : 'combined'))
 
    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 

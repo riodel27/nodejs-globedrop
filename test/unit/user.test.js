@@ -1,21 +1,16 @@
-/* eslint-disable global-require */
-
 const chai = require('chai')
-const express = require('express')
-
 const { Container } = require('typedi')
 
 const { expect } = chai
 
-const config = require('../../src/config')[process.env.NODE_ENV || 'development']
+describe('Users', () => {
+   beforeEach(async () => {
+      const User = Container.get('userModel')
+      await User.deleteMany({})
+   })
 
-before(async function () {
-   await require('../../src/loaders').init({ expressApp: express(), config })
-})
-
-describe('Users', function () {
-   describe('Users List', function () {
-      it('should return all the users', async function () {
+   describe('Users List', () => {
+      it('should return all the users', async () => {
          const UserServiceInstance = Container.get('user.service')
 
          const response = await UserServiceInstance.list()
@@ -24,8 +19,8 @@ describe('Users', function () {
       })
    })
 
-   describe('Create User', function () {
-      it('should create user', async function () {
+   describe('Create User', () => {
+      it('should create user', async () => {
          const UserServiceInstance = Container.get('user.service')
 
          const response = await UserServiceInstance.createUser({

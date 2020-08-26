@@ -131,7 +131,7 @@ class UserService {
 
       return {
          user,
-         access_token: UserService.generateToken(user),
+         access_token: UserService.generateToken(user), // TODO: fix for refresh token
          refresh_token: UserService.generateToken(user, true),
          expires_in: config.refreshTokenTtl,
       }
@@ -148,11 +148,11 @@ class UserService {
 
    static generateToken(user, refreshtoken = false) {
       if (refreshtoken) {
-         return jwt.sign(isObject(user) ? user : user.toJSON(), config.secretRefreshToken, {
+         return jwt.sign(user.toJSON(), config.secretRefreshToken, {
             expiresIn: `${config.refreshTokenTtl}`,
          })
       }
-      return jwt.sign(isObject(user) ? user : user.toJSON(), config.secretToken, {
+      return jwt.sign(user.toJSON(), config.secretToken, {
          expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
       })
    }

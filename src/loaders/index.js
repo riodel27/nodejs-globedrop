@@ -33,6 +33,8 @@ module.exports.init = async ({ expressApp, config }) => {
    })
    Logger.info('✌️ Dependency Injector loaded')
 
-   await expressLoader({ app: expressApp })
+   const app = await expressLoader({ app: expressApp })
    Logger.info('✌️ Express loaded')
+
+   return app
 }
