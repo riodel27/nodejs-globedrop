@@ -1,0 +1,27 @@
+
+
+- src/
+    - server.js                          # App entry point
+    
+    - api/                               # Express route controllers for all the endpoints of the app
+
+    - config/                            # Environment variables and configuration related stuff
+
+    - loaders/                           # Split the startup process into modules
+
+    - models/                            # Database models
+
+    - services/                          # All the business logic is here
+
+- test/
+    - index.test.js                      # Test entry point
+
+    - fixtures/                          # maintain mock data
+
+    - integration/                       # test individual modules, components or piece of units
+
+    - unit/                              # test the behavior of code in small, independent units
+
+
+
+

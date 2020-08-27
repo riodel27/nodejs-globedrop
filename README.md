@@ -4,7 +4,7 @@ An app to list all Non-Governmental/Non-Profit Organization across the world.
 
 ## The folder structure
 
-![Alt text](./uploads/readme/folder-structure.png?raw=true 'Folder Structure')
+![Alt text](./uploads/readme/folder-structure-2.png?raw=true 'Folder Structure')
 
 ## Development
 
@@ -18,12 +18,22 @@ Then just start the server with
 
 It uses nodemon for live reloading
 
+# Lint
+
+lint src folder
+
+`npm run lint`
+
+lint test folder
+
+`npm run lint-test`
+
+![Alt text](./uploads/readme/eslint-log.png?raw=true 'eslint fix output')
+
 ## Unit and Integration Test
 
 You will need to run
 
 `npm run test`
-
-ouput:
 
 ![Alt text](./uploads/readme/test-output.png?raw=true 'Example ouput for unit and integration test')

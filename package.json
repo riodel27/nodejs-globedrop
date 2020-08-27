@@ -5,6 +5,8 @@
    "main": "./src/server.js",
    "scripts": {
       "dev": "nodemon ./src/server.js",
+      "lint": "eslint --fix src",
+      "lint-test": "eslint --fix test",
       "start": "pm2 start ./src/server.js --name globedrop",
       "test": "NODE_ENV=test mocha --recursive --timeout 10000"
    },
