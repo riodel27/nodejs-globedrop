@@ -1,11 +1,15 @@
 const mongoose = require('mongoose')
 
 module.exports = async (url) => {
-   const connection = await mongoose.connect(url, {
-      useFindAndModify: false,
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-   })
+   try {
+      const connection = await mongoose.connect(url, {
+         useFindAndModify: false,
+         useNewUrlParser: true,
+         useUnifiedTopology: true,
+      })
 
-   return connection.connection.db
+      return connection.connection.db
+   } catch (error) {
+      throw new Error(error)
+   }
 }

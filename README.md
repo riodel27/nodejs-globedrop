@@ -6,6 +6,12 @@ An app to list all Non-Governmental/Non-Profit Organization across the world.
 
 ![Alt text](./uploads/readme/folder-structure-2.png?raw=true 'Folder Structure')
 
+## Docker
+
+Make sure you have a running container for mongo and redis(only if using redis). comment out redis in code if you are not goint to need it.
+
+![Alt text](./uploads/readme/docker-ps.png?raw=true 'Folder Structure')
+
 ## Development
 
 The first time, you will need to run

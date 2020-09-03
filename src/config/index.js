@@ -7,7 +7,7 @@ module.exports = {
       logLevel: 'debug',
       nodeEnv: 'development',
       database: {
-         url: 'mongodb://localhost:27017/globedrop',
+         url: 'mongodb://localhost:27018/globedrop',
       },
       accessTokenTtl: '24',
       secretToken: 'globedrop',
@@ -23,7 +23,7 @@ module.exports = {
       logLevel: process.env.LOG_LEVEL,
       nodeEnv: process.env.NODE_ENV,
       database: {
-         url: process.env.MONGO_URI,
+         url: process.env.MONGO_URI, // use external database storage
       },
       accessTokenTtl: process.env.SECRET_TOKEN_EXPIRED_IN,
       secretToken: process.env.SECRET_TOKEN_EXPIRED_IN,
