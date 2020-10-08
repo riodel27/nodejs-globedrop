@@ -18,17 +18,12 @@ const UserSchema = Schema(
       facebook: {
          type: Schema.Types.Mixed,
       },
-      google: Object,
-      createdAt: {
-         type: Date,
-         default: Date.now,
-      },
-      updatedAt: {
-         type: Date,
-         default: Date.now,
+      google: {
+         type: Schema.Types.Mixed,
       },
    },
    {
+      timestamps: true,
       versionKey: false,
    },
 )
@@ -37,10 +32,6 @@ UserSchema.pre('save', async function (next) {
    const user = this
    user.password = user.password && (await bcrypt.hash(user.password.trim(), 12))
    next()
-})
-
-UserSchema.pre('findOneAndUpdate', async function () {
-   this.update({}, { $set: { updatedAt: new Date() } })
 })
 
 module.exports = model('User', UserSchema)

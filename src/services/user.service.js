@@ -132,6 +132,23 @@ class UserService {
          { email: profile.emails[0].value, facebook: profile },
          {
             upsert: true,
+            new: true,
+         },
+      )
+
+      return {
+         user,
+         access_token: UserService.generateToken(user),
+      }
+   }
+
+   async googleAuthentication(profile) {
+      const user = await this.user.findOneAndUpdate(
+         { 'google.id': profile.id },
+         { email: profile.emails[0].value, google: profile },
+         {
+            upsert: true,
+            new: true,
          },
       )
 

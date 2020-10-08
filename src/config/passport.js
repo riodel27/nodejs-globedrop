@@ -2,10 +2,12 @@
 const passport = require('passport')
 const pLocal = require('passport-local')
 const pFacebook = require('passport-facebook')
+const pGoogle = require('passport-google-oauth20')
 const { Container } = require('typedi')
 
 const LocalStrategy = pLocal.Strategy
 const FacebookStrategy = pFacebook.Strategy
+const GoogleStrategy = pGoogle.Strategy
 
 const config = Container.get('config')
 
@@ -15,7 +17,6 @@ passport.use(
       async (email, password, done) => {
          const logger = Container.get('logger')
          logger.debug('calling passport local strategy')
-
          try {
             const UserServiceInstance = Container.get('user.service')
             const user = await UserServiceInstance.login(email, password)
@@ -41,9 +42,29 @@ passport.use(
          logger.debug('calling facebook authentication')
          try {
             const UserServiceInstance = Container.get('user.service')
-
             const user = await UserServiceInstance.facebookAuthentication(profile)
+            done(null, user)
+         } catch (error) {
+            logger.error(error)
+            done(error)
+         }
+      },
+   ),
+)
 
+passport.use(
+   new GoogleStrategy(
+      {
+         clientID: config.google.oauth.clientId,
+         clientSecret: config.google.oauth.secret,
+         callbackURL: config.google.oauth.callback,
+      },
+      async function (_, __, profile, done) {
+         const logger = Container.get('logger')
+         logger.debug('calling google authentication')
+         try {
+            const UserServiceInstance = Container.get('user.service')
+            const user = await UserServiceInstance.googleAuthentication(profile)
             done(null, user)
          } catch (error) {
             logger.error(error)

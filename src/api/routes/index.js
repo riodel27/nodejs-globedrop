@@ -28,11 +28,23 @@ module.exports = () => {
       },
    )
 
+   router.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }))
+
+   router.get(
+      '/auth/google/callback',
+      passport.authenticate('google', { failureRedirect: '/fail' /** todo */ }),
+      function (req, res) {
+         return res.status(200).json({
+            user: req.user.user,
+            access_token: req.user.access_token,
+         })
+      },
+   )
+
    router.use(middleware.isAuthenticated)
 
    router.get('/organizations', OrganizationController.getOrganizations)
    router.get('/users', UserController.getUsers)
-
    router.get('/users/:user_type', UserController.getUsersByUserType)
 
    return router

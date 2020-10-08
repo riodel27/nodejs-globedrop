@@ -18,9 +18,16 @@ module.exports = {
       },
       facebook: {
          oauth: {
-            clientId: '379897266533214',
-            secret: 'f9b8bf70f180a91ca672a6ee0ad2cdb8',
-            callback: 'http://localhost:3000/api/auth/facebook/callback',
+            clientId: process.env.FACEBOOK_OAUTH_CLIENT_ID,
+            secret: process.env.FACEBOOK_OAUTH_CLIENT_SECRET,
+            callback: process.env.FACEBOOK_OAUTH_CALLBACK,
+         },
+      },
+      google: {
+         oauth: {
+            clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
+            secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+            callback: process.env.GOOGLE_OAUTH_CALLBACK,
          },
       },
    },
@@ -39,6 +46,20 @@ module.exports = {
       api: {
          prefix: process.env.API_PREFIX,
       },
+      facebook: {
+         oauth: {
+            clientId: process.env.FACEBOOK_OAUTH_CLIENT_ID,
+            secret: process.env.FACEBOOK_OAUTH_CLIENT_SECRET,
+            callback: process.env.FACEBOOK_OAUTH_CALLBACK,
+         },
+      },
+      google: {
+         oauth: {
+            clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
+            secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+            callback: process.env.GOOGLE_OAUTH_CALLBACK,
+         },
+      },
    },
    staging: {},
    test: {
@@ -55,6 +76,20 @@ module.exports = {
       refreshTokenTtl: '30d',
       api: {
          prefix: '/api',
+      },
+      facebook: {
+         oauth: {
+            clientId: process.env.FACEBOOK_OAUTH_CLIENT_ID,
+            secret: process.env.FACEBOOK_OAUTH_CLIENT_SECRET,
+            callback: process.env.FACEBOOK_OAUTH_CALLBACK,
+         },
+      },
+      google: {
+         oauth: {
+            clientId: process.env.GOOGLE_OAUTH_CLIENT_ID,
+            secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+            callback: process.env.GOOGLE_OAUTH_CALLBACK,
+         },
       },
    },
 }
