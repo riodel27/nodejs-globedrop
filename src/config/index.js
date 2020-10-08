@@ -7,7 +7,7 @@ module.exports = {
       logLevel: 'debug',
       nodeEnv: 'development',
       database: {
-         url: 'mongodb://localhost:27018/globedrop',
+         url: 'mongodb://localhost:27017/globedrop',
       },
       accessTokenTtl: '24',
       secretToken: 'globedrop',

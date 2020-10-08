@@ -5,6 +5,7 @@ const helmet = require('helmet')
 const swaggerUi = require('swagger-ui-express')
 const { isArray: _isArray } = require('lodash')
 const { Container } = require('typedi')
+const passport = require('passport')
 
 const middleware = require('../utils/middleware')
 const swaggerSpec = require('../utils/swagger')
@@ -24,6 +25,12 @@ module.exports = async ({ app }) => {
    app.use(compression())
    app.use(bodyParser.urlencoded({ extended: false }))
    app.use(bodyParser.json())
+
+   /** passport initialization */
+   require('../config/passport')
+   app.use(passport.initialize())
+   app.use(passport.session())
+
    app.use(middleware.cors)
 
    // ...More middlewares

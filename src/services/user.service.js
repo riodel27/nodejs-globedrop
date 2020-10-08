@@ -156,6 +156,14 @@ class UserService {
          expiresIn: `${config.accessTokenTtl}h`, // make sure that unit is in h(Hour)
       })
    }
+
+   async deserializeUser(id) {
+      const userRecord = await this.user.findOne({ _id: id })
+
+      if (not(userRecord)) throw new Error('User not found')
+
+      return userRecord
+   }
 }
 
 module.exports = UserService

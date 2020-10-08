@@ -26,6 +26,8 @@
       "lodash": "^4.17.20",
       "mongoose": "^5.9.25",
       "morgan": "^1.9.1",
+      "passport": "^0.4.1",
+      "passport-local": "^1.0.0",
       "ramda": "^0.27.1",
       "redis": "^3.0.2",
       "swagger-jsdoc": "^3.4.0",
