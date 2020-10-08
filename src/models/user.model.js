@@ -15,6 +15,10 @@ const UserSchema = Schema(
          default: 'user',
       },
       organizations: [{ type: Schema.Types.ObjectId, ref: 'Organization' }],
+      facebook: {
+         type: Schema.Types.Mixed,
+      },
+      google: Object,
       createdAt: {
          type: Date,
          default: Date.now,

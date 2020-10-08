@@ -1,9 +1,13 @@
 /* eslint-disable no-underscore-dangle */
 const passport = require('passport')
 const pLocal = require('passport-local')
+const pFacebook = require('passport-facebook')
 const { Container } = require('typedi')
 
 const LocalStrategy = pLocal.Strategy
+const FacebookStrategy = pFacebook.Strategy
+
+const config = Container.get('config')
 
 passport.use(
    new LocalStrategy(
@@ -19,6 +23,31 @@ passport.use(
          } catch (e) {
             logger.error(e)
             done(e)
+         }
+      },
+   ),
+)
+
+passport.use(
+   new FacebookStrategy(
+      {
+         clientID: config.facebook.oauth.clientId,
+         clientSecret: config.facebook.oauth.secret,
+         callbackURL: config.facebook.oauth.callback,
+         profileFields: ['id', 'emails', 'name'],
+      },
+      async function (_, __, profile, done) {
+         const logger = Container.get('logger')
+         logger.debug('calling facebook authentication')
+         try {
+            const UserServiceInstance = Container.get('user.service')
+
+            const user = await UserServiceInstance.facebookAuthentication(profile)
+
+            done(null, user)
+         } catch (error) {
+            logger.error(error)
+            done(error)
          }
       },
    ),

@@ -126,6 +126,21 @@ class UserService {
       }
    }
 
+   async facebookAuthentication(profile) {
+      const user = await this.user.findOneAndUpdate(
+         { 'facebook.id': profile.id },
+         { email: profile.emails[0].value, facebook: profile },
+         {
+            upsert: true,
+         },
+      )
+
+      return {
+         user,
+         access_token: UserService.generateToken(user),
+      }
+   }
+
    async refreshToken(token) {
       const { iat, exp, ...user } = await jwtVerifyRefreshToken(token)
 
